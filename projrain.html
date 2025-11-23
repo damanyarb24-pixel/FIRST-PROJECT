@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mumbai Flood Safe Route Finder</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .input-panel {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+            font-size: 1.1em;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .map-container {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            min-height: 500px;
+        }
+
+        .graph-visualization {
+            width: 100%;
+            height: 450px;
+            border: 2px solid #eee;
+            border-radius: 10px;
+            position: relative;
+            background: linear-gradient(to bottom, #e3f2fd 0%, #fff 100%);
+            overflow: hidden;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .results-panel {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .result-item {
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .route-info {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .info-box {
+            flex: 1;
+            min-width: 150px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .info-box h3 {
+            color: #667eea;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        .info-box p {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .flood-warning {
+            background: #fff3cd;
+            border-left-color: #ffc107;
+            border: 1px solid #ffc107;
+        }
+
+        .safe-route {
+            background: #d4edda;
+            border-left-color: #28a745;
+            border: 1px solid #28a745;
+        }
+
+        .route-path {
+            margin-top: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border: 2px dashed #667eea;
+        }
+
+        .route-path h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .path-step {
+            display: inline-block;
+            padding: 8px 15px;
+            margin: 5px;
+            background: #667eea;
+            color: white;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+
+        .legend {
+            display: flex;
+            gap: 20px;
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid #333;
+        }
+
+        .flood-risk-high {
+            background: #ff4444;
+        }
+
+        .flood-risk-medium {
+            background: #ffaa00;
+        }
+
+        .flood-risk-low {
+            background: #4CAF50;
+        }
+
+        .algorithm-info {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .algorithm-info h3 {
+            color: #1976d2;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 968px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🌊 Mumbai Flood Safe Route Finder</h1>
+            <p class="subtitle">Find the safest route during monsoon season using Dijkstra's Algorithm</p>
+        </header>
+
+        <div class="main-content">
+            <div class="input-panel">
+                <h2 style="margin-bottom: 20px; color: #667eea;">📍 Route Planning</h2>
+                
+                <div class="input-group">
+                    <label for="start">Starting Point:</label>
+                    <select id="start">
+                        <option value="">-- Select Start --</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label for="end">Destination:</label>
+                    <select id="end">
+                        <option value="">-- Select Destination --</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label for="rainfall">Current Rainfall (mm/hour):</label>
+                    <input type="number" id="rainfall" min="0" max="200" value="50" placeholder="Enter rainfall intensity">
+                </div>
+
+                <button class="btn" onclick="findSafeRoute()">🔍 Find Safe Route</button>
+
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color flood-risk-high"></div>
+                        <span>High Risk</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color flood-risk-medium"></div>
+                        <span>Medium Risk</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color flood-risk-low"></div>
+                        <span>Safe</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="map-container">
+                <h2 style="margin-bottom: 15px; color: #667eea;">🗺️ Mumbai Road Network</h2>
+                <div class="graph-visualization">
+                    <canvas id="graphCanvas"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="results-panel" id="results" style="display: none;">
+            <h2 style="margin-bottom: 20px; color: #667eea;">📊 Route Analysis</h2>
+            <div id="routeResults"></div>
+        </div>
+
+
+    </div>
+
+    <script>
+        // Mumbai locations with flood risk levels
+        const locations = {
+            'Churchgate': { x: 150, y: 400, floodRisk: 'low', coords: [18.9322, 72.8264] },
+            'Marine Drive': { x: 180, y: 380, floodRisk: 'medium', coords: [18.9432, 72.8230] },
+            'Dadar': { x: 250, y: 300, floodRisk: 'high', coords: [19.0178, 72.8478] },
+            'Bandra': { x: 200, y: 250, floodRisk: 'medium', coords: [19.0596, 72.8295] },
+            'Andheri': { x: 280, y: 200, floodRisk: 'high', coords: [19.1136, 72.8697] },
+            'Kurla': { x: 350, y: 280, floodRisk: 'high', coords: [19.0728, 72.8826] },
+            'Worli': { x: 170, y: 320, floodRisk: 'medium', coords: [19.0178, 72.8150] },
+            'BKC': { x: 280, y: 270, floodRisk: 'low', coords: [19.0653, 72.8687] },
+            'Lower Parel': { x: 220, y: 330, floodRisk: 'medium', coords: [18.9989, 72.8303] },
+            'Goregaon': { x: 330, y: 150, floodRisk: 'medium', coords: [19.1547, 72.8489] },
+            'Malad': { x: 360, y: 120, floodRisk: 'high', coords: [19.1864, 72.8481] },
+            'Powai': { x: 400, y: 200, floodRisk: 'low', coords: [19.1176, 72.9060] },
+            'Ghatkopar': { x: 420, y: 260, floodRisk: 'medium', coords: [19.0863, 72.9081] },
+            'Chembur': { x: 380, y: 320, floodRisk: 'high', coords: [19.0633, 72.8997] },
+            'Sion': { x: 300, y: 330, floodRisk: 'high', coords: [19.0433, 72.8620] }
+        };
+
+        // Road connections (edges) with base distances
+        const roads = [
+            { from: 'Churchgate', to: 'Marine Drive', distance: 3 },
+            { from: 'Marine Drive', to: 'Worli', distance: 5 },
+            { from: 'Worli', to: 'Lower Parel', distance: 4 },
+            { from: 'Lower Parel', to: 'Dadar', distance: 5 },
+            { from: 'Dadar', to: 'Bandra', distance: 6 },
+            { from: 'Bandra', to: 'Andheri', distance: 8 },
+            { from: 'Andheri', to: 'Goregaon', distance: 7 },
+            { from: 'Goregaon', to: 'Malad', distance: 5 },
+            { from: 'Dadar', to: 'Sion', distance: 4 },
+            { from: 'Sion', to: 'Kurla', distance: 5 },
+            { from: 'Kurla', to: 'Chembur', distance: 6 },
+            { from: 'Kurla', to: 'Ghatkopar', distance: 5 },
+            { from: 'Andheri', to: 'BKC', distance: 5 },
+            { from: 'BKC', to: 'Kurla', distance: 4 },
+            { from: 'Bandra', to: 'BKC', distance: 3 },
+            { from: 'Andheri', to: 'Powai', distance: 10 },
+            { from: 'Powai', to: 'Ghatkopar', distance: 6 },
+            { from: 'Lower Parel', to: 'Bandra', distance: 7 },
+            { from: 'Worli', to: 'Bandra', distance: 6 },
+            { from: 'Chembur', to: 'Ghatkopar', distance: 4 }
+        ];
+
+        // Initialize dropdowns
+        function initializeDropdowns() {
+            const startSelect = document.getElementById('start');
+            const endSelect = document.getElementById('end');
+            
+            Object.keys(locations).sort().forEach(location => {
+                startSelect.innerHTML += `<option value="${location}">${location}</option>`;
+                endSelect.innerHTML += `<option value="${location}">${location}</option>`;
+            });
+        }
+
+        // Draw the graph
+        function drawGraph(highlightPath = []) {
+            const canvas = document.getElementById('graphCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Set canvas size
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw edges first
+            roads.forEach(road => {
+                const from = locations[road.from];
+                const to = locations[road.to];
+                
+                const isHighlighted = highlightPath.length > 0 && 
+                    highlightPath.some((path, i) => 
+                        i < highlightPath.length - 1 && 
+                        ((path === road.from && highlightPath[i+1] === road.to) ||
+                         (path === road.to && highlightPath[i+1] === road.from))
+                    );
+                
+                ctx.beginPath();
+                ctx.moveTo(from.x, from.y);
+                ctx.lineTo(to.x, to.y);
+                ctx.strokeStyle = isHighlighted ? '#4CAF50' : '#ccc';
+                ctx.lineWidth = isHighlighted ? 4 : 2;
+                ctx.stroke();
+            });
+            
+            // Draw nodes
+            Object.entries(locations).forEach(([name, loc]) => {
+                const isHighlighted = highlightPath.includes(name);
+                
+                // Draw circle
+                ctx.beginPath();
+                ctx.arc(loc.x, loc.y, isHighlighted ? 12 : 8, 0, 2 * Math.PI);
+                
+                // Color based on flood risk
+                if (loc.floodRisk === 'high') {
+                    ctx.fillStyle = '#ff4444';
+                } else if (loc.floodRisk === 'medium') {
+                    ctx.fillStyle = '#ffaa00';
+                } else {
+                    ctx.fillStyle = '#4CAF50';
+                }
+                
+                if (isHighlighted) {
+                    ctx.strokeStyle = '#333';
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+                }
+                
+                ctx.fill();
+                
+                // Draw label
+                ctx.fillStyle = '#333';
+                ctx.font = isHighlighted ? 'bold 12px Arial' : '11px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(name, loc.x, loc.y - 15);
+            });
+        }
+
+        // Dijkstra's Algorithm with flood risk consideration
+        function dijkstra(start, end, rainfallIntensity) {
+            const distances = {};
+            const previous = {};
+            const unvisited = new Set(Object.keys(locations));
+            
+            // Initialize distances
+            Object.keys(locations).forEach(node => {
+                distances[node] = Infinity;
+                previous[node] = null;
+            });
+            distances[start] = 0;
+            
+            while (unvisited.size > 0) {
+                // Find node with minimum distance
+                let current = null;
+                let minDist = Infinity;
+                unvisited.forEach(node => {
+                    if (distances[node] < minDist) {
+                        minDist = distances[node];
+                        current = node;
+                    }
+                });
+                
+                if (current === null || current === end) break;
+                
+                unvisited.delete(current);
+                
+                // Check neighbors
+                roads.forEach(road => {
+                    let neighbor = null;
+                    if (road.from === current && unvisited.has(road.to)) {
+                        neighbor = road.to;
+                    } else if (road.to === current && unvisited.has(road.from)) {
+                        neighbor = road.from;
+                    }
+                    
+                    if (neighbor) {
+                        // Calculate weight with flood risk penalty
+                        let weight = road.distance;
+                        const neighborRisk = locations[neighbor].floodRisk;
+                        
+                        // Add penalty based on flood risk and rainfall
+                        if (neighborRisk === 'high') {
+                            weight += (rainfallIntensity / 10) * 2; // High penalty
+                        } else if (neighborRisk === 'medium') {
+                            weight += (rainfallIntensity / 10) * 1; // Medium penalty
+                        }
+                        
+                        const alt = distances[current] + weight;
+                        
+                        if (alt < distances[neighbor]) {
+                            distances[neighbor] = alt;
+                            previous[neighbor] = current;
+                        }
+                    }
+                });
+            }
+            
+            // Reconstruct path
+            const path = [];
+            let current = end;
+            while (current !== null) {
+                path.unshift(current);
+                current = previous[current];
+            }
+            
+            return {
+                path: path,
+                distance: distances[end],
+                previous: previous
+            };
+        }
+
+        // Calculate actual route distance
+        function calculateActualDistance(path) {
+            let totalDistance = 0;
+            for (let i = 0; i < path.length - 1; i++) {
+                const road = roads.find(r => 
+                    (r.from === path[i] && r.to === path[i+1]) ||
+                    (r.to === path[i] && r.from === path[i+1])
+                );
+                if (road) {
+                    totalDistance += road.distance;
+                }
+            }
+            return totalDistance;
+        }
+
+        // Calculate flood risk score
+        function calculateFloodRisk(path) {
+            let riskScore = 0;
+            path.forEach(location => {
+                const risk = locations[location].floodRisk;
+                if (risk === 'high') riskScore += 3;
+                else if (risk === 'medium') riskScore += 2;
+                else riskScore += 1;
+            });
+            return riskScore;
+        }
+
+        // Find safe route
+        function findSafeRoute() {
+            const start = document.getElementById('start').value;
+            const end = document.getElementById('end').value;
+            const rainfall = parseInt(document.getElementById('rainfall').value);
+            
+            if (!start || !end) {
+                alert('Please select both start and destination points!');
+                return;
+            }
+            
+            if (start === end) {
+                alert('Start and destination cannot be the same!');
+                return;
+            }
+            
+            const result = dijkstra(start, end, rainfall);
+            
+            if (result.distance === Infinity) {
+                alert('No route found between these locations!');
+                return;
+            }
+            
+            const actualDistance = calculateActualDistance(result.path);
+            const floodRisk = calculateFloodRisk(result.path);
+            const estimatedTime = Math.round(actualDistance * 3); // 3 mins per km average
+            
+            // Draw highlighted path
+            drawGraph(result.path);
+            
+            // Display results
+            const resultsDiv = document.getElementById('results');
+            const routeResultsDiv = document.getElementById('routeResults');
+            
+            let riskClass = floodRisk > 15 ? 'flood-warning' : 'safe-route';
+            let riskLabel = floodRisk > 15 ? '⚠️ High Risk Route' : '✅ Safe Route';
+            
+            routeResultsDiv.innerHTML = `
+                <div class="result-item ${riskClass}">
+                    <h3 style="margin-bottom: 15px; font-size: 1.3em;">${riskLabel}</h3>
+                    <div class="route-info">
+                        <div class="info-box">
+                            <h3>Distance</h3>
+                            <p>${actualDistance.toFixed(1)} km</p>
+                        </div>
+                        <div class="info-box">
+                            <h3>Est. Time</h3>
+                            <p>${estimatedTime} mins</p>
+                        </div>
+                        <div class="info-box">
+                            <h3>Flood Risk</h3>
+                            <p>${floodRisk}/30</p>
+                        </div>
+                        <div class="info-box">
+                            <h3>Rainfall</h3>
+                            <p>${rainfall} mm/hr</p>
+                        </div>
+                    </div>
+                    
+                    <div class="route-path">
+                        <h3>🛣️ Recommended Route:</h3>
+                        <div>
+                            ${result.path.map((loc, i) => 
+                                `<span class="path-step">${i + 1}. ${loc}</span>`
+                            ).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            resultsDiv.style.display = 'block';
+            resultsDiv.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Initialize on page load
+        window.onload = function() {
+            initializeDropdowns();
+            drawGraph();
+        };
+
+        // Redraw on window resize
+        window.onresize = function() {
+            drawGraph();
+        };
+    </script>
+</body>
+</html>
